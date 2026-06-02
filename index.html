@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>户储充电桩计算器 - Home Storage EV Charger Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c7a4d;
+            --primary-light: #e8f5e9;
+            --primary-dark: #1b5e30;
+            --danger: #d32f2f;
+            --danger-light: #ffebee;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #607d8b;
+            --border: #e0e6ed;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #e8f0e8 0%, #dce8dc 30%, #eef2ee 60%, #e3ebe3 100%);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+        }
+
+        header {
+            text-align: center;
+            padding: 32px 0 8px;
+        }
+
+        header .icon-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        header .icon {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            letter-spacing: 0.5px;
+        }
+
+        header .subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            border: none;
+            border-radius: 2px;
+            margin: 16px auto 28px;
+            max-width: 600px;
+            opacity: 0.4;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+            border: 1px solid var(--border);
+            transition: box-shadow var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .card-header .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .input-group label .unit {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .input-group label .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            transition: all var(--transition);
+        }
+
+        .input-group label .badge.target {
+            background: #fff3e0;
+            color: #e65100;
+            animation: pulse-badge 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 17px;
+            font-weight: 500;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            transition: all var(--transition);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(44, 122, 77, 0.1);
+        }
+
+        .input-group input.is-target {
+            border-color: #ff9800;
+            background: #fffbf5;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.08);
+        }
+
+        .input-group input.result-highlight {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .input-group input::placeholder {
+            color: #b0bec5;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .input-group .error-msg {
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 4px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-group .error-msg.show {
+            display: flex;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(44, 122, 77, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+            border-color: #b0bec5;
+        }
+
+        .result-area {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-radius: var(--radius-sm);
+            border: 1px solid #c8e6c9;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .result-area .result-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .result-area .result-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .result-area .result-value .unit-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .result-area .formula-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card .card-header {
+            margin-bottom: 12px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            color: #b0bec5;
+            font-size: 14px;
+        }
+
+        .chart-legend-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .preset-tag {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .preset-tag:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+
+        .preset-tag.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px 0 8px;
+            font-size: 12px;
+            color: #a0b0b8;
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .btn-row {
+                flex-direction: column;
+            }
+
+            .result-area .result-value {
+                font-size: 26px;
+            }
+
+            .container {
+                padding: 12px 10px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="icon-row">
+                <div class="icon">⚡</div>
+                <h1>户储充电桩计算器</h1>
+            </div>
+            <p class="subtitle">Home Storage EV Charger Calculator — 停电应急储能规划工具</p>
+        </header>
+
+        <hr class="divider">
+
+        <div class="main-layout">
+            <div class="card" id="inputCard">
+                <div class="card-header">
+                    <span class="dot"></span>
+                    <h2>参数输入</h2>
+                </div>
+
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;">
+                    请输入其中<strong>三个</strong>参数，留空<strong>一个</strong>待计算，系统将自动求解。
+                </p>
+
+                <div class="input-group">
+                    <label>
+                        停电时长
+                        <span class="unit">(小时 h)</span>
+                        <span class="badge" id="badgeDuration">待输入</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inputDuration" placeholder="例如: 4" min="0.1" max="720" step="0.1">
+                    </div>
+                    <span class="error-msg" id="errDuration"></span>
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        电池容量
+                        <span class="unit">(千瓦时 kWh)</span>
+                        <span class="badge" id="badgeCapacity">待输入</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inputCapacity" placeholder="例如: 10" min="0.1" max="50" step="0.1">
+                    </div>
+                    <span class="error-msg" id="errCapacity"></span>
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        充电桩功率
+                        <span class="unit">(千瓦 kW)</span>
+                        <span class="badge" id="badgePower">待输入</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inputPower" placeholder="例如: 7" min="0.1" max="350" step="0.1">
+                    </div>
+                    <span class="error-msg" id="errPower"></span>
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        家庭日常用电量
+                        <span class="unit">(千瓦时/天 kWh/day)</span>
+                        <span class="badge" id="badgeDaily">待输入</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inputDaily" placeholder="例如: 10" min="0.1" max="100" step="0.1">
+                    </div>
+                    <span class="error-msg" id="errDaily"></span>
+                </div>
+
+                <div class="preset-row">
+                    <span style="font-size:12px;color:var(--text-secondary);line-height:28px;margin-right:4px;">快捷场景:</span>
+                    <span class="preset-tag" data-preset="short">短时停电 (1h)</span>
+                    <span class="preset-tag" data-preset="medium">中等停电 (3h)</span>
+                    <span class="preset-tag" data-preset="long">长时停电 (8h)</span>
+                    <span class="preset-tag" data-preset="extreme">极端停电 (12h)</span>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btnCalculate">
+                        <span>🔍</span> 计算
+                    </button>
+                    <button class="btn btn-secondary" id="btnClear">
+                        <span>🔄</span> 清空
+                    </button>
+                </div>
+
+                <div class="result-area" id="resultArea">
+                    <div class="result-label" id="resultLabel"></div>
+                    <div class="result-value" id="resultValue"></div>
+                    <div class="formula-hint" id="formulaHint"></div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="card-header">
+                    <span class="dot"></span>
+                    <h2>关系曲线图</h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="relationChart"></canvas>
+                </div>
+                <div class="chart-legend-hint">
+                    不同充电功率下，电池容量随停电时长的变化关系 · 含家庭日常用电负荷 · 标记点为当前计算结果
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Home Storage EV Charger Calculator &copy; 2026 — 基于 电池容量(kWh) = (充电桩功率(kW) + 家庭日用电量(kWh/day)÷24) × 停电时长(h)
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            const inputDuration = document.getElementById('inputDuration');
+            const inputCapacity = document.getElementById('inputCapacity');
+            const inputPower = document.getElementById('inputPower');
+            const inputDaily = document.getElementById('inputDaily');
+            const badgeDuration = document.getElementById('badgeDuration');
+            const badgeCapacity = document.getElementById('badgeCapacity');
+            const badgePower = document.getElementById('badgePower');
+            const badgeDaily = document.getElementById('badgeDaily');
+            const errDuration = document.getElementById('errDuration');
+            const errCapacity = document.getElementById('errCapacity');
+            const errPower = document.getElementById('errPower');
+            const errDaily = document.getElementById('errDaily');
+            const btnCalculate = document.getElementById('btnCalculate');
+            const btnClear = document.getElementById('btnClear');
+            const resultArea = document.getElementById('resultArea');
+            const resultLabel = document.getElementById('resultLabel');
+            const resultValue = document.getElementById('resultValue');
+            const formulaHint = document.getElementById('formulaHint');
+            const presetTags = document.querySelectorAll('.preset-tag');
+            const ctx = document.getElementById('relationChart').getContext('2d');
+
+            let chart = null;
+            let lastCalculated = null;
+
+            const DEFAULT_POWER_LEVELS = [2, 3.7, 5, 7, 11];
+            const DURATION_RANGE = { min: 0, max: 24, step: 0.5 };
+            const COLORS = ['#2196f3', '#4caf50', '#ff9800', '#9c27b0', '#f44336'];
+
+            const ALL_INPUTS = [inputDuration, inputCapacity, inputPower, inputDaily];
+            const ALL_BADGES = [badgeDuration, badgeCapacity, badgePower, badgeDaily];
+            const ALL_ERRORS = [errDuration, errCapacity, errPower, errDaily];
+            const FIELD_IDS = ['duration', 'capacity', 'power', 'daily'];
+
+            function getFilledCount() {
+                let count = 0;
+                if (inputDuration.value.trim() !== '') count++;
+                if (inputCapacity.value.trim() !== '') count++;
+                if (inputPower.value.trim() !== '') count++;
+                if (inputDaily.value.trim() !== '') count++;
+                return count;
+            }
+
+            function getEmptyField() {
+                if (inputDuration.value.trim() === '') return 'duration';
+                if (inputCapacity.value.trim() === '') return 'capacity';
+                if (inputPower.value.trim() === '') return 'power';
+                if (inputDaily.value.trim() === '') return 'daily';
+                return null;
+            }
+
+            function clearErrors() {
+                ALL_ERRORS.forEach(el => {
+                    el.classList.remove('show');
+                    el.textContent = '';
+                });
+                ALL_INPUTS.forEach(el => {
+                    el.classList.remove('is-target', 'result-highlight');
+                });
+            }
+
+            function showError(field, message) {
+                const errMap = { duration: errDuration, capacity: errCapacity, power: errPower, daily: errDaily };
+                const el = errMap[field];
+                if (el) {
+                    el.textContent = '⚠ ' + message;
+                    el.classList.add('show');
+                }
+            }
+
+            function updateBadges() {
+                const empty = getEmptyField();
+                const badges = [
+                    { el: badgeDuration, field: 'duration', text: '停电时长' },
+                    { el: badgeCapacity, field: 'capacity', text: '电池容量' },
+                    { el: badgePower, field: 'power', text: '充电桩功率' },
+                    { el: badgeDaily, field: 'daily', text: '家庭日用电量' },
+                ];
+
+                badges.forEach(b => {
+                    b.el.classList.remove('target');
+                    if (b.field === empty) {
+                        b.el.textContent = '待计算';
+                        b.el.classList.add('target');
+                    } else if (getInputEl(b.field).value.trim() !== '') {
+                        b.el.textContent = '已输入 ✓';
+                    } else {
+                        b.el.textContent = '待输入';
+                    }
+                });
+
+                ALL_INPUTS.forEach(el => {
+                    el.classList.remove('is-target');
+                });
+                if (empty) {
+                    const targetInput = getInputEl(empty);
+                    targetInput.classList.add('is-target');
+                }
+            }
+
+            function getInputEl(field) {
+                switch (field) {
+                    case 'duration': return inputDuration;
+                    case 'capacity': return inputCapacity;
+                    case 'power': return inputPower;
+                    case 'daily': return inputDaily;
+                    default: return null;
+                }
+            }
+
+            function validateInput(field, value) {
+                if (value === '') return null;
+                const num = parseFloat(value);
+                if (isNaN(num)) return '请输入有效数字';
+                if (num <= 0) return '请输入大于 0 的数值';
+                switch (field) {
+                    case 'duration':
+                        if (num > 720) return '停电时长不能超过 720 小时 (30天)';
+                        break;
+                    case 'capacity':
+                        if (num > 50) return '电池容量不能超过 50 kWh';
+                        break;
+                    case 'power':
+                        if (num > 350) return '充电桩功率不能超过 350 kW';
+                        break;
+                    case 'daily':
+                        if (num > 100) return '家庭日用电量不能超过 100 kWh/day';
+                        break;
+                }
+                return null;
+            }
+
+            function validateAll() {
+                clearErrors();
+                let hasError = false;
+                FIELD_IDS.forEach(field => {
+                    const input = getInputEl(field);
+                    const error = validateInput(field, input.value.trim());
+                    if (error) {
+                        showError(field, error);
+                        hasError = true;
+                    }
+                });
+                return !hasError;
+            }
+
+            function getDailyValue() {
+                const v = inputDaily.value.trim();
+                return v !== '' ? parseFloat(v) : 0;
+            }
+
+            // ---- Chart ----
+            function generateChartData() {
+                const durations = [];
+                for (let d = DURATION_RANGE.min; d <= DURATION_RANGE.max; d += DURATION_RANGE.step) {
+                    durations.push(Math.round(d * 10) / 10);
+                }
+
+                const daily = getDailyValue();
+                const hourlyBase = daily / 24;
+
+                const datasets = DEFAULT_POWER_LEVELS.map((power, idx) => {
+                    const capacities = durations.map(d => Math.round((power + hourlyBase) * d * 100) / 100);
+                    return {
+                        label: power + ' kW' + (daily > 0 ? ' (+' + hourlyBase.toFixed(2) + ' kW家用)' : ''),
+                        data: capacities,
+                        borderColor: COLORS[idx],
+                        backgroundColor: COLORS[idx] + '18',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: COLORS[idx],
+                        tension: 0,
+                        fill: false,
+                    };
+                });
+
+                return { durations, datasets };
+            }
+
+            function updateChart() {
+                if (!chart) return;
+                const { durations, datasets } = generateChartData();
+                chart.data.labels = durations;
+                chart.data.datasets = datasets;
+                chart.update('none');
+            }
+
+            function initChart() {
+                const { durations, datasets } = generateChartData();
+                if (chart) chart.destroy();
+
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: durations,
+                        datasets: datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'nearest',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    pointStyleWidth: 10,
+                                    padding: 20,
+                                    font: { size: 12, weight: '500' },
+                                    color: '#2c3e50',
+                                },
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(44, 62, 80, 0.92)',
+                                titleFont: { size: 13, weight: '600' },
+                                bodyFont: { size: 12 },
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: true,
+                                callbacks: {
+                                    title: function (ctx) {
+                                        return '停电时长: ' + ctx[0].label + ' h';
+                                    },
+                                    label: function (ctx) {
+                                        return '电池容量: ' + ctx.raw + ' kWh';
+                                    },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '停电时长 (小时 h)',
+                                    font: { size: 13, weight: '600' },
+                                    color: '#2c3e50',
+                                },
+                                grid: { color: '#e8ecf1' },
+                                ticks: {
+                                    stepSize: 2,
+                                    font: { size: 11 },
+                                    color: '#607d8b',
+                                },
+                                min: 0,
+                                max: 24,
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '电池容量 (千瓦时 kWh)',
+                                    font: { size: 13, weight: '600' },
+                                    color: '#2c3e50',
+                                },
+                                grid: { color: '#e8ecf1' },
+                                ticks: {
+                                    font: { size: 11 },
+                                    color: '#607d8b',
+                                    callback: function (val) {
+                                        return val + ' kWh';
+                                    },
+                                },
+                                beginAtZero: true,
+                                suggestedMax: 60,
+                            },
+                        },
+                    },
+                });
+            }
+
+            function addResultMarker(duration, capacity, power, daily) {
+                if (!chart) return;
+
+                const label = daily > 0
+                    ? '当前结果 (充电' + power + 'kW + 家用' + (daily / 24).toFixed(2) + 'kW)'
+                    : '当前结果 (' + power + ' kW)';
+
+                const markerDataset = {
+                    label: label,
+                    data: [{ x: duration, y: capacity }],
+                    borderColor: '#d32f2f',
+                    backgroundColor: '#d32f2f',
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    pointStyle: 'rectRounded',
+                    showLine: false,
+                    order: 0,
+                };
+
+                const existingIdx = chart.data.datasets.findIndex(
+                    ds => ds.label && ds.label.startsWith('当前结果')
+                );
+                if (existingIdx >= 0) {
+                    chart.data.datasets[existingIdx] = markerDataset;
+                } else {
+                    chart.data.datasets.push(markerDataset);
+                }
+                chart.update('none');
+            }
+
+            function clearResultMarker() {
+                if (!chart) return;
+                const idx = chart.data.datasets.findIndex(
+                    ds => ds.label && ds.label.startsWith('当前结果')
+                );
+                if (idx >= 0) {
+                    chart.data.datasets.splice(idx, 1);
+                    chart.update('none');
+                }
+            }
+
+            // ---- Calculation ----
+            function calculate() {
+                clearErrors();
+                resultArea.classList.remove('show');
+                ALL_INPUTS.forEach(el => el.classList.remove('result-highlight'));
+
+                if (!validateAll()) return;
+
+                const filledCount = getFilledCount();
+                const emptyField = getEmptyField();
+
+                if (filledCount < 3) {
+                    showError('duration', '请至少输入三个参数');
+                    return;
+                }
+
+                if (filledCount === 4) {
+                    showError('duration', '请留空一个参数作为计算目标');
+                    return;
+                }
+
+                const dVal = parseFloat(inputDuration.value.trim()) || null;
+                const cVal = parseFloat(inputCapacity.value.trim()) || null;
+                const pVal = parseFloat(inputPower.value.trim()) || null;
+                const dailyVal = parseFloat(inputDaily.value.trim()) || null;
+                const hourlyDaily = dailyVal !== null ? dailyVal / 24 : 0;
+
+                let result = null;
+
+                if (emptyField === 'capacity') {
+                    result = (pVal + hourlyDaily) * dVal;
+                    resultLabel.textContent = '计算结果 — 所需电池容量';
+                    resultValue.innerHTML = result.toFixed(2) + ' <span class="unit-text">kWh</span>';
+                    formulaHint.textContent =
+                        '电池容量 = (' + pVal + ' kW + ' + dailyVal + '÷24 kW) × ' + dVal + ' h = ' + result.toFixed(2) + ' kWh';
+                    inputCapacity.value = result.toFixed(2);
+                    inputCapacity.classList.add('result-highlight');
+                } else if (emptyField === 'duration') {
+                    result = cVal / (pVal + hourlyDaily);
+                    resultLabel.textContent = '计算结果 — 可支撑停电时长';
+                    resultValue.innerHTML = result.toFixed(2) + ' <span class="unit-text">小时 (h)</span>';
+                    formulaHint.textContent =
+                        '停电时长 = ' + cVal + ' kWh ÷ (' + pVal + ' kW + ' + dailyVal + '÷24 kW) = ' + result.toFixed(2) + ' h';
+                    inputDuration.value = result.toFixed(2);
+                    inputDuration.classList.add('result-highlight');
+                } else if (emptyField === 'power') {
+                    result = cVal / dVal - hourlyDaily;
+                    if (result < 0) {
+                        showError('power', '电池容量不足以支撑停电期间的家庭用电，请增大电池容量');
+                        return;
+                    }
+                    resultLabel.textContent = '计算结果 — 所需充电桩功率';
+                    resultValue.innerHTML = result.toFixed(2) + ' <span class="unit-text">kW</span>';
+                    formulaHint.textContent =
+                        '充电桩功率 = ' + cVal + ' kWh ÷ ' + dVal + ' h - ' + dailyVal + '÷24 kW = ' + result.toFixed(2) + ' kW';
+                    inputPower.value = result.toFixed(2);
+                    inputPower.classList.add('result-highlight');
+                } else if (emptyField === 'daily') {
+                    result = (cVal / dVal - pVal) * 24;
+                    if (result < 0) {
+                        showError('daily', '充电桩功率已超过电池可供电能力，请检查输入参数');
+                        return;
+                    }
+                    resultLabel.textContent = '计算结果 — 可支撑家庭日用电量';
+                    resultValue.innerHTML = result.toFixed(2) + ' <span class="unit-text">kWh/day</span>';
+                    formulaHint.textContent =
+                        '家庭日用电量 = (' + cVal + ' kWh ÷ ' + dVal + ' h - ' + pVal + ' kW) × 24 = ' + result.toFixed(2) + ' kWh/day';
+                    inputDaily.value = result.toFixed(2);
+                    inputDaily.classList.add('result-highlight');
+                }
+
+                resultArea.classList.add('show');
+                updateBadges();
+                updateChart();
+
+                const finalDuration = parseFloat(inputDuration.value.trim());
+                const finalCapacity = parseFloat(inputCapacity.value.trim());
+                const finalPower = parseFloat(inputPower.value.trim());
+                const finalDaily = parseFloat(inputDaily.value.trim());
+
+                lastCalculated = { duration: finalDuration, capacity: finalCapacity, power: finalPower, daily: finalDaily };
+                addResultMarker(finalDuration, finalCapacity, Math.round(finalPower * 10) / 10, finalDaily);
+            }
+
+            function clearAll() {
+                ALL_INPUTS.forEach(el => {
+                    el.value = '';
+                    el.classList.remove('is-target', 'result-highlight');
+                });
+                clearErrors();
+                resultArea.classList.remove('show');
+                clearResultMarker();
+                lastCalculated = null;
+                updateBadges();
+                updateChart();
+                ALL_BADGES.forEach(b => {
+                    b.classList.remove('target');
+                    b.textContent = '待输入';
+                });
+            }
+
+            // ---- Presets ----
+            function applyPreset(type) {
+                clearAll();
+
+                const commonPowers = { short: 7, medium: 7, long: 5, extreme: 7 };
+                const commonCapacities = { short: 7, medium: 15, long: 30, extreme: 50 };
+                const commonDailies = { short: 10, medium: 10, long: 15, extreme: 20 };
+
+                switch (type) {
+                    case 'short':
+                        inputDuration.value = '1';
+                        inputPower.value = commonPowers.short.toString();
+                        inputDaily.value = commonDailies.short.toString();
+                        break;
+                    case 'medium':
+                        inputDuration.value = '3';
+                        inputPower.value = commonPowers.medium.toString();
+                        inputDaily.value = commonDailies.medium.toString();
+                        break;
+                    case 'long':
+                        inputDuration.value = '8';
+                        inputCapacity.value = commonCapacities.long.toString();
+                        inputDaily.value = commonDailies.long.toString();
+                        break;
+                    case 'extreme':
+                        inputDuration.value = '12';
+                        inputCapacity.value = commonCapacities.extreme.toString();
+                        inputDaily.value = commonDailies.extreme.toString();
+                        break;
+                }
+
+                updateBadges();
+                updateChart();
+                presetTags.forEach(t => t.classList.remove('active'));
+                const activeTag = document.querySelector('[data-preset="' + type + '"]');
+                if (activeTag) activeTag.classList.add('active');
+            }
+
+            // ---- Event Listeners ----
+            ALL_INPUTS.forEach(input => {
+                input.addEventListener('input', function () {
+                    clearErrors();
+                    resultArea.classList.remove('show');
+                    clearResultMarker();
+                    ALL_INPUTS.forEach(el => el.classList.remove('result-highlight'));
+                    updateBadges();
+                    updateChart();
+                });
+
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') calculate();
+                });
+
+                input.addEventListener('blur', function () {
+                    const fieldMap = {
+                        'inputDuration': 'duration',
+                        'inputCapacity': 'capacity',
+                        'inputPower': 'power',
+                        'inputDaily': 'daily',
+                    };
+                    const field = fieldMap[this.id];
+                    const error = validateInput(field, this.value.trim());
+                    if (error) showError(field, error);
+                });
+            });
+
+            btnCalculate.addEventListener('click', calculate);
+            btnClear.addEventListener('click', clearAll);
+
+            presetTags.forEach(tag => {
+                tag.addEventListener('click', function () {
+                    const preset = this.getAttribute('data-preset');
+                    applyPreset(preset);
+                });
+            });
+
+            initChart();
+            updateBadges();
+        })();
+    </script>
+</body>
+</html>

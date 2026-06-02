@@ -1,0 +1,12 @@
+{
+  "name": "home-storage-calculator",
+  "version": "1.0.0",
+  "description": "Home Storage EV Charger Calculator - 户储充电桩计算器",
+  "scripts": {
+    "dev": "npx http-server -p 8000",
+    "build": "mkdir -p dist && cp index.html dist/ && cp vercel.json dist/ 2>/dev/null || xcopy index.html dist\\ /y && xcopy vercel.json dist\\ /y"
+  },
+  "keywords": ["ev-charger", "battery-storage", "calculator"],
+  "author": "",
+  "license": "MIT"
+}
