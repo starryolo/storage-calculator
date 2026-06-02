@@ -1,5 +1,7 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "buildCommand": "echo 'Static site build complete'",
+  "outputDirectory": ".",
   "headers": [
     {
       "source": "/(.*)",
